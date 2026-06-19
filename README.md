@@ -38,6 +38,20 @@ Shortcut Magic is a powerful yet simple Android utility that allows you to creat
 2.  Open in **Android Studio**.
 3.  Build and Run on your device (API 28+).
 
+## 🤖 CI/CD & Play Store Deployment
+
+This project is equipped with a GitHub Actions workflow for automated deployment. To use it:
+
+1.  **Prepare a Service Account**: In Google Play Console, create a Service Account with "Release Manager" permissions and download the JSON key.
+2.  **Generate a Signing Key**: Use `keytool` to create a `.jks` file.
+3.  **Set up GitHub Secrets**: Go to your repository **Settings > Secrets and variables > Actions** and add:
+    -   `SIGNING_KEY_BASE64`: Your `.jks` file encoded in base64 (`base64 -i your_key.jks`).
+    -   `ALIAS`: Your key alias.
+    -   `KEY_STORE_PASSWORD`: Your keystore password.
+    -   `KEY_PASSWORD`: Your key password.
+    -   `SERVICE_ACCOUNT_JSON`: The plain text content of your Google Service Account JSON.
+4.  **Deploy**: Push a tag starting with `v` (e.g., `git tag v1.0.0 && git push origin v1.0.0`) to trigger an automatic build and upload to the **Internal Sharing** track.
+
 ## 🤝 Contributing
 
 Feedback and contributions are welcome! Feel free to check the [Issues](https://github.com/albertincx/ai-shortcut-magic-android/issues) page.
