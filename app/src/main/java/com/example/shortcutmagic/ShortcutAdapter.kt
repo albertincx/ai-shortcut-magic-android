@@ -5,7 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.shortcutmagic.databinding.ItemShortcutBinding
 
-class ShortcutAdapter(private var items: List<ShortcutEntry>) : RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
+class ShortcutAdapter(
+    private var items: List<ShortcutEntry>,
+    private val onItemClick: (ShortcutEntry) -> Unit
+) : RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemShortcutBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -26,6 +29,8 @@ class ShortcutAdapter(private var items: List<ShortcutEntry>) : RecyclerView.Ada
             else -> android.R.drawable.ic_menu_help
         }
         holder.binding.imgIcon.setImageResource(iconRes)
+        
+        holder.itemView.setOnClickListener { onItemClick(item) }
     }
 
     override fun getItemCount() = items.size

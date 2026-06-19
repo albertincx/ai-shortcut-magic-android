@@ -8,7 +8,7 @@ import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -27,7 +27,8 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        val navController = navHostFragment.navController
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
@@ -46,15 +47,17 @@ class MainActivity : AppCompatActivity() {
             R.id.action_clear_all -> {
                 ShortcutStorage(this).clearAll()
                 Toast.makeText(this, R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
-                // Refresh first fragment if needed
+                // Refresh current fragment
+                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+                val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
+                if (currentFragment is FirstFragment) {
+                    currentFragment.loadShortcuts() // Trigger reload
+                }
                 true
             }
             R.id.action_contact -> {
-                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:developer@example.com")
-                    putExtra(Intent.EXTRA_SUBJECT, "Shortcut Magic Feedback")
-                }
-                startActivity(Intent.createChooser(intent, "Send Email"))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/albertincx/ai-shortcut-magic-android/issues"))
+                startActivity(intent)
                 true
             }
             R.id.action_github -> {
@@ -75,7 +78,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment_content_main)
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        val navController = navHostFragment.navController
         return navController.navigateUp(appBarConfiguration)
                 || super.onSupportNavigateUp()
     }

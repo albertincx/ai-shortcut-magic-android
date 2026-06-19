@@ -132,77 +132,51 @@ class SecondFragment : Fragment() {
             return
         }
 
-        val intent = when (binding.radioGroupType.checkedRadioButtonId) {
+        val type = when (binding.radioGroupType.checkedRadioButtonId) {
+            R.id.radio_url -> "URL"
+            R.id.radio_file -> "FILE"
+            R.id.radio_app -> "APP"
+            else -> ""
+        }
+
+        val data = when (binding.radioGroupType.checkedRadioButtonId) {
             R.id.radio_url -> {
                 val url = binding.editUrl.text.toString()
                 if (url.isEmpty()) {
                     binding.editUrl.error = getString(R.string.error_invalid_url)
                     return
                 }
-                val finalUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    "https://$url"
-                } else url
-                Intent(Intent.ACTION_VIEW, Uri.parse(finalUrl))
+                url
             }
             R.id.radio_file -> {
                 if (selectedFileUri == null) {
                     Toast.makeText(requireContext(), "Please pick a file", Toast.LENGTH_SHORT).show()
                     return
                 }
-                Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(selectedFileUri, requireContext().contentResolver.getType(selectedFileUri!!))
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
+                selectedFileUri.toString()
             }
             R.id.radio_app -> {
                 if (selectedApp == null) {
                     Toast.makeText(requireContext(), "Please pick an app", Toast.LENGTH_SHORT).show()
                     return
                 }
-                selectedApp?.launchIntent ?: return
+                selectedApp?.packageName ?: ""
             }
             else -> return
         }
 
-        val icon = if (selectedIcon != null) {
-            IconCompat.createWithBitmap(selectedIcon!!)
-        } else {
-            IconCompat.createWithResource(requireContext(), R.mipmap.ic_launcher)
-        }
+        ShortcutHelper.pinShortcut(requireContext(), name, type, data, selectedIcon)
 
-        val shortcut = ShortcutInfoCompat.Builder(requireContext(), UUID.randomUUID().toString())
-            .setShortLabel(name)
-            .setIcon(icon)
-            .setIntent(intent)
-            .build()
+        // Save to local storage
+        val entry = ShortcutEntry(
+            id = UUID.randomUUID().toString(),
+            name = name,
+            type = type,
+            data = data
+        )
+        ShortcutStorage(requireContext()).saveShortcut(entry)
 
-        if (ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
-            ShortcutManagerCompat.requestPinShortcut(requireContext(), shortcut, null)
-            
-            // Save to local storage
-            val entry = ShortcutEntry(
-                id = UUID.randomUUID().toString(),
-                name = name,
-                type = when (binding.radioGroupType.checkedRadioButtonId) {
-                    R.id.radio_url -> "URL"
-                    R.id.radio_file -> "FILE"
-                    R.id.radio_app -> "APP"
-                    else -> "UNKNOWN"
-                },
-                data = when (binding.radioGroupType.checkedRadioButtonId) {
-                    R.id.radio_url -> binding.editUrl.text.toString()
-                    R.id.radio_file -> selectedFileUri.toString()
-                    R.id.radio_app -> selectedApp?.packageName ?: ""
-                    else -> ""
-                }
-            )
-            ShortcutStorage(requireContext()).saveShortcut(entry)
-
-            Toast.makeText(requireContext(), R.string.msg_shortcut_created, Toast.LENGTH_SHORT).show()
-            findNavController().navigateUp()
-        } else {
-            Toast.makeText(requireContext(), "Pinned shortcuts are not supported on this device", Toast.LENGTH_SHORT).show()
-        }
+        findNavController().navigateUp()
     }
 
     private fun drawableToBitmap(drawable: Drawable): Bitmap {

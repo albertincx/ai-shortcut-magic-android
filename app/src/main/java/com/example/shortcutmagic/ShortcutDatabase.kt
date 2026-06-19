@@ -26,8 +26,12 @@ class ShortcutStorage(context: Context) {
 
     fun getAllShortcuts(): List<ShortcutEntry> {
         val json = prefs.getString("shortcuts_list", null) ?: return emptyList()
-        val type = object : TypeToken<List<ShortcutEntry>>() {}.type
-        return gson.fromJson(json, type)
+        return try {
+            val type = object : TypeToken<List<ShortcutEntry>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     fun clearAll() {
