@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Shortcut Type"
+            android:text="@string/label_shortcut_type"
             android:textAppearance="?attr/textAppearanceSubtitle1" />
 
         <RadioGroup
@@ -116,6 +116,7 @@
                 android:layout_height="64dp"
                 android:background="#EEE"
                 android:padding="8dp"
+                android:contentDescription="@string/icon_preview_desc"
                 android:src="@android:drawable/ic_menu_help" />
 
             <Button

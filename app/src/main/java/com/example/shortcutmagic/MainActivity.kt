@@ -1,18 +1,17 @@
 package com.example.shortcutmagic
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.view.Menu
+import android.view.MenuItem
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.navigation.findNavController
-import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
 import com.example.shortcutmagic.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -22,22 +21,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
         setSupportActionBar(binding.toolbar)
 
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-        val navController = navHostFragment.navController
-
+        val navController = findNavController(R.id.nav_host_fragment_content_main)
         appBarConfiguration = AppBarConfiguration(navController.graph)
         setupActionBarWithNavController(navController, appBarConfiguration)
 
@@ -47,17 +37,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         return when (item.itemId) {
-            R.id.action_settings -> true
+            R.id.action_clear_all -> {
+                ShortcutStorage(this).clearAll()
+                Toast.makeText(this, R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
+                // Refresh first fragment if needed
+                true
+            }
+            R.id.action_contact -> {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:developer@example.com")
+                    putExtra(Intent.EXTRA_SUBJECT, "Shortcut Magic Feedback")
+                }
+                startActivity(Intent.createChooser(intent, "Send Email"))
+                true
+            }
+            R.id.action_github -> {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/albertincx/ai-shortcut-magic-android"))
+                startActivity(intent)
+                true
+            }
+            R.id.action_about -> {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.app_name)
+                    .setMessage("Shortcut Magic - Easily create shortcuts for your favorite apps, files, and websites.\n\nVersion 1.0")
+                    .setPositiveButton("OK", null)
+                    .show()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }

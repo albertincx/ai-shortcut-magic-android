@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ImageDecoder
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -35,7 +36,7 @@ class SecondFragment : Fragment() {
     private val pickFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             selectedFileUri = it
-            binding.textSelectedItem.text = "Selected File: ${it.path}"
+            binding.textSelectedItem.text = getString(R.string.shortcut_type_file) + ": " + it.path
             if (binding.editShortcutName.text.isNullOrEmpty()) {
                 binding.editShortcutName.setText(it.lastPathSegment ?: "File Shortcut")
             }
@@ -44,7 +45,7 @@ class SecondFragment : Fragment() {
 
     private val pickIconLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
-            val bitmap = MediaStore.Images.Media.getBitmap(requireContext().contentResolver, it)
+            val bitmap = loadBitmap(it)
             selectedIcon = bitmap
             binding.imageIconPreview.setImageBitmap(bitmap)
         }
@@ -72,6 +73,11 @@ class SecondFragment : Fragment() {
         binding.btnPickIcon.setOnClickListener { pickIconLauncher.launch("image/*") }
 
         binding.btnCreateShortcut.setOnClickListener { createShortcut() }
+    }
+
+    private fun loadBitmap(uri: Uri): Bitmap {
+        val source = ImageDecoder.createSource(requireContext().contentResolver, uri)
+        return ImageDecoder.decodeBitmap(source)
     }
 
     private fun showAppPickerDialog() {
@@ -109,7 +115,7 @@ class SecondFragment : Fragment() {
             .setAdapter(adapter) { _, which ->
                 val app = apps[which]
                 selectedApp = app
-                binding.textSelectedItem.text = "Selected App: ${app.name}"
+                binding.textSelectedItem.text = getString(R.string.shortcut_type_app) + ": " + app.name
                 if (binding.editShortcutName.text.isNullOrEmpty()) {
                     binding.editShortcutName.setText(app.name)
                 }
@@ -133,7 +139,10 @@ class SecondFragment : Fragment() {
                     binding.editUrl.error = getString(R.string.error_invalid_url)
                     return
                 }
-                Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                val finalUrl = if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    "https://$url"
+                } else url
+                Intent(Intent.ACTION_VIEW, Uri.parse(finalUrl))
             }
             R.id.radio_file -> {
                 if (selectedFileUri == null) {
@@ -169,6 +178,26 @@ class SecondFragment : Fragment() {
 
         if (ShortcutManagerCompat.isRequestPinShortcutSupported(requireContext())) {
             ShortcutManagerCompat.requestPinShortcut(requireContext(), shortcut, null)
+            
+            // Save to local storage
+            val entry = ShortcutEntry(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                type = when (binding.radioGroupType.checkedRadioButtonId) {
+                    R.id.radio_url -> "URL"
+                    R.id.radio_file -> "FILE"
+                    R.id.radio_app -> "APP"
+                    else -> "UNKNOWN"
+                },
+                data = when (binding.radioGroupType.checkedRadioButtonId) {
+                    R.id.radio_url -> binding.editUrl.text.toString()
+                    R.id.radio_file -> selectedFileUri.toString()
+                    R.id.radio_app -> selectedApp?.packageName ?: ""
+                    else -> ""
+                }
+            )
+            ShortcutStorage(requireContext()).saveShortcut(entry)
+
             Toast.makeText(requireContext(), R.string.msg_shortcut_created, Toast.LENGTH_SHORT).show()
             findNavController().navigateUp()
         } else {
@@ -178,7 +207,11 @@ class SecondFragment : Fragment() {
 
     private fun drawableToBitmap(drawable: Drawable): Bitmap {
         if (drawable is BitmapDrawable) return drawable.bitmap
-        val bitmap = Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(
+            if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 1,
+            if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 1,
+            Bitmap.Config.ARGB_8888
+        )
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
