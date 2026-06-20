@@ -7,8 +7,11 @@ import com.example.shortcutmagic.databinding.ItemShortcutBinding
 
 class ShortcutAdapter(
     private var items: List<ShortcutEntry>,
-    private val onItemClick: (ShortcutEntry) -> Unit
+    private val onItemClick: (ShortcutEntry) -> Unit,
+    private val onSelectionChanged: (Int) -> Unit
 ) : RecyclerView.Adapter<ShortcutAdapter.ViewHolder>() {
+
+    private val selectedIds = mutableSetOf<String>()
 
     class ViewHolder(val binding: ItemShortcutBinding) : RecyclerView.ViewHolder(binding.root)
 
@@ -30,6 +33,14 @@ class ShortcutAdapter(
         }
         holder.binding.imgIcon.setImageResource(iconRes)
         
+        holder.binding.checkboxSelect.setOnCheckedChangeListener(null)
+        holder.binding.checkboxSelect.isChecked = selectedIds.contains(item.id)
+        
+        holder.binding.checkboxSelect.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) selectedIds.add(item.id) else selectedIds.remove(item.id)
+            onSelectionChanged(selectedIds.size)
+        }
+
         holder.itemView.setOnClickListener { onItemClick(item) }
     }
 
@@ -37,6 +48,9 @@ class ShortcutAdapter(
 
     fun updateItems(newItems: List<ShortcutEntry>) {
         items = newItems
+        selectedIds.clear()
         notifyDataSetChanged()
     }
+
+    fun getSelectedIds(): Set<String> = selectedIds
 }

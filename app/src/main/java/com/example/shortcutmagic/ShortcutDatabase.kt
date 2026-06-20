@@ -34,6 +34,12 @@ class ShortcutStorage(context: Context) {
         }
     }
 
+    fun deleteShortcuts(idsToDelete: Set<String>) {
+        val shortcuts = getAllShortcuts().filter { it.id !in idsToDelete }
+        val json = gson.toJson(shortcuts)
+        prefs.edit().putString("shortcuts_list", json).apply()
+    }
+
     fun clearAll() {
         prefs.edit().remove("shortcuts_list").apply()
     }

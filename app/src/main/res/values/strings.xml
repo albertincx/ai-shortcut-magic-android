@@ -24,4 +24,6 @@
     <string name="action_contact">Contact Developer</string>
     <string name="action_github">Project GitHub</string>
     <string name="msg_history_cleared">History cleared</string>
+    <string name="action_delete_selected">Delete Selected</string>
+    <string name="msg_deleted_count">%d items deleted</string>
 </resources>

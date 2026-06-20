@@ -47,12 +47,7 @@ class MainActivity : AppCompatActivity() {
             R.id.action_clear_all -> {
                 ShortcutStorage(this).clearAll()
                 Toast.makeText(this, R.string.msg_history_cleared, Toast.LENGTH_SHORT).show()
-                // Refresh current fragment
-                val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-                val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
-                if (currentFragment is FirstFragment) {
-                    currentFragment.loadShortcuts() // Trigger reload
-                }
+                refreshList()
                 true
             }
             R.id.action_contact -> {
@@ -74,6 +69,14 @@ class MainActivity : AppCompatActivity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun refreshList() {
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
+        val currentFragment = navHostFragment.childFragmentManager.fragments.firstOrNull()
+        if (currentFragment is FirstFragment) {
+            currentFragment.loadShortcuts()
         }
     }
 
