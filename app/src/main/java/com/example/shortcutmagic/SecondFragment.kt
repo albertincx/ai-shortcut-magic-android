@@ -33,8 +33,16 @@ class SecondFragment : Fragment() {
     private var selectedApp: AppInfo? = null
     private var selectedIcon: Bitmap? = null
 
-    private val pickFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    private val pickFileLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
+            try {
+                requireContext().contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (e: Exception) {
+                // Fallback for URIs that don't support persistable permissions
+            }
             selectedFileUri = it
             binding.textSelectedItem.text = getString(R.string.shortcut_type_file) + ": " + it.path
             if (binding.editShortcutName.text.isNullOrEmpty()) {
@@ -68,7 +76,7 @@ class SecondFragment : Fragment() {
             binding.btnPickApp.visibility = if (checkedId == R.id.radio_app) View.VISIBLE else View.GONE
         }
 
-        binding.btnPickFile.setOnClickListener { pickFileLauncher.launch("*/*") }
+        binding.btnPickFile.setOnClickListener { pickFileLauncher.launch(arrayOf("*/*")) }
         binding.btnPickApp.setOnClickListener { showAppPickerDialog() }
         binding.btnPickIcon.setOnClickListener { pickIconLauncher.launch("image/*") }
 

@@ -26,8 +26,10 @@ object ShortcutHelper {
             "FILE" -> {
                 val uri = Uri.parse(data)
                 Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(uri, context.contentResolver.getType(uri))
+                    val mimeType = context.contentResolver.getType(uri) ?: "*/*"
+                    setDataAndType(uri, mimeType)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
             }
             "APP" -> {
